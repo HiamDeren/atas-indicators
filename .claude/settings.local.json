@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"C:\\\\Projects\\\\C#\\\\Atas Indicators\"; dotnet build 2>&1 | Where-Object { $_ -match \"error CS\" } | Select-Object -Unique | head -30)",
+      "PowerShell(Get-ChildItem \"$env:APPDATA\\\\ATAS\\\\Indicators\\\\\" | Select-Object Name, FullName)",
+      "PowerShell(Move-Item \"C:\\\\Projects\\\\C#\\\\Atas Indicators\\\\Range69.cs\" \"C:\\\\Projects\\\\C#\\\\Atas Indicators\\\\Range69\\\\Range69.cs\")",
+      "PowerShell(Move-Item \"C:\\\\Projects\\\\C#\\\\Atas Indicators\\\\OvernightRange.cs\" \"C:\\\\Projects\\\\C#\\\\Atas Indicators\\\\OvernightRange\\\\OvernightRange.cs\")"
+    ]
+  }
+}
