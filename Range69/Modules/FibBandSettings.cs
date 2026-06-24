@@ -27,7 +27,7 @@ namespace Atas_Indicators.Modules
         public FibBandSettings() { }
         public FibBandSettings(Color color)
         {
-            Color    = color;
+            Color = color;
             BoxColor = Color.FromArgb(25, color.R, color.G, color.B);
         }
 

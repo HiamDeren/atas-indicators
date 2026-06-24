@@ -16,7 +16,7 @@ namespace Atas_Indicators.Modules
         public decimal MaxVolume;    // Volume at POC — used to scale histogram bars
         public decimal TotalVolume;  // Sum of all volume in profile
         public decimal TickSize;     // Price step used to build the profile
-        public bool    IsReady;
+        public bool IsReady;
 
         // Full price → volume map for histogram rendering (null until calculated)
         public Dictionary<decimal, decimal>? Distribution;
@@ -48,13 +48,13 @@ namespace Atas_Indicators.Modules
         // ═════════════════════════════════════════════════════════════════════
         public static void BuildCluster(
             IndicatorCandle candle,
-            decimal         tickSize,
+            decimal tickSize,
             Dictionary<decimal, decimal> cluster)
         {
             if (tickSize <= 0 || candle.High < candle.Low) return;
 
             // Snap Low/High to nearest tick boundary
-            decimal low  = Math.Round(candle.Low  / tickSize) * tickSize;
+            decimal low = Math.Round(candle.Low / tickSize) * tickSize;
             decimal high = Math.Round(candle.High / tickSize) * tickSize;
 
             for (decimal price = low; price <= high; price += tickSize)
@@ -73,8 +73,8 @@ namespace Atas_Indicators.Modules
         // Convenience overload: build from a range of bars in one call
         public static Dictionary<decimal, decimal> BuildCluster(
             Func<int, IndicatorCandle> getCandle,
-            int     startBar,
-            int     endBar,
+            int startBar,
+            int endBar,
             decimal tickSize)
         {
             var cluster = new Dictionary<decimal, decimal>(capacity: 256);
@@ -104,13 +104,13 @@ namespace Atas_Indicators.Modules
             // ── POC ──────────────────────────────────────────────────────────
             var pocEntry = cluster.MaxBy(kv => kv.Value);
             decimal pocPrice = pocEntry.Key;
-            decimal pocVol   = pocEntry.Value;
+            decimal pocVol = pocEntry.Value;
 
             // ── Value Area expansion (CME standard method) ────────────────────
             // Expand outward from POC, always consuming the side with more volume.
             // Stop when accumulated volume >= target.
             decimal target = total * valueAreaPct;
-            decimal acc    = pocVol;
+            decimal acc = pocVol;
 
             // Early exit: POC alone already covers the value area
             // (happens with very few price levels or very high valueAreaPct)
@@ -129,18 +129,18 @@ namespace Atas_Indicators.Modules
 
                 // Tie goes to upside (standard rule)
                 if (upVol >= dnVol && canUp) { upIdx++; acc += upVol; }
-                else if (canDn)              { dnIdx--; acc += dnVol; }
+                else if (canDn) { dnIdx--; acc += dnVol; }
             }
 
             return new VolumeProfile
             {
-                POC          = pocPrice,
-                VAH          = sorted[upIdx],
-                VAL          = sorted[dnIdx],
-                MaxVolume    = pocVol,
-                TotalVolume  = total,
-                TickSize     = tickSize,
-                IsReady      = true,
+                POC = pocPrice,
+                VAH = sorted[upIdx],
+                VAL = sorted[dnIdx],
+                MaxVolume = pocVol,
+                TotalVolume = total,
+                TickSize = tickSize,
+                IsReady = true,
                 Distribution = cluster,
             };
         }
@@ -167,8 +167,8 @@ namespace Atas_Indicators.Modules
             {
                 if (vol <= 0 || high < low) continue;
 
-                long bot    = (long)Math.Round(low  / tickSize);
-                long top    = (long)Math.Round(high / tickSize);
+                long bot = (long)Math.Round(low / tickSize);
+                long top = (long)Math.Round(high / tickSize);
                 long levels = Math.Max(top - bot + 1, 1);
                 decimal vpl = vol / levels;
 

@@ -20,7 +20,7 @@ namespace Atas_Indicators.Modules
 
         private static TimeZoneInfo ResolveEasternTZ()
         {
-            try   { return TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"); }
+            try { return TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time"); }
             catch { return TimeZoneInfo.FindSystemTimeZoneById("America/New_York"); }
         }
 
@@ -33,7 +33,8 @@ namespace Atas_Indicators.Modules
 
         // ── State ─────────────────────────────────────────────────────────────
         private SessionSnapshot? _active;
-        private bool             _prevIn;
+        private bool _prevIn;
+        private int _lastInBar = -1; // last bar index that was inside the window
 
         // ── Public output ─────────────────────────────────────────────────────
 
@@ -50,8 +51,8 @@ namespace Atas_Indicators.Modules
         /// <param name="drawEnd">EST time when drawn lines stop extending. Defaults to 16:15 (RTH close).</param>
         public SessionTracker(TimeSpan start, TimeSpan end, TimeSpan? drawEnd = null)
         {
-            _start  = start;
-            _end    = end;
+            _start = start;
+            _end = end;
             DrawEnd = drawEnd ?? new TimeSpan(16, 15, 0);
         }
 
@@ -61,8 +62,9 @@ namespace Atas_Indicators.Modules
         public void Reset()
         {
             _active = null;
-            Last    = null;
+            Last = null;
             _prevIn = false;
+            _lastInBar = -1;
         }
 
         /// <summary>
@@ -72,8 +74,10 @@ namespace Atas_Indicators.Modules
         {
             bool inSession = IsInWindow(utcTime);
 
-            bool sessionStarted = inSession  && !_prevIn;
-            bool sessionEnded   = !inSession && _prevIn;
+            bool sessionStarted = inSession && !_prevIn;
+            bool sessionEnded = !inSession && _prevIn;
+
+            if (inSession) _lastInBar = bar;
 
             if (sessionStarted)
                 OpenSession(bar, open, high, low, utcTime);
@@ -104,10 +108,13 @@ namespace Atas_Indicators.Modules
 
         private void CloseSession(int bar, DateTime utcTime)
         {
-            // bar-1 = last bar INSIDE the session (e.g. 8:59), not the first bar outside (9:00)
-            _active!.Lock(bar - 1, ToEastern(utcTime).Date);
-            Last    = _active;
+            // Use _lastInBar (the actual last bar inside the window) instead of bar-1.
+            // bar-1 fails when bars are non-contiguous (gaps, renko, range bars, etc.).
+            int endBar = _lastInBar >= 0 ? _lastInBar : bar - 1;
+            _active!.Lock(endBar, ToEastern(utcTime).Date);
+            Last = _active;
             _active = null;
+            _lastInBar = -1;
         }
 
         // Set DayEndBar on the most recent completed session once we see 16:15 EST

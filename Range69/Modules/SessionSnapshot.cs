@@ -9,13 +9,13 @@ namespace Atas_Indicators.Modules
     public sealed class SessionSnapshot
     {
         // ── Raw values ────────────────────────────────────────────────────────
-        public int     StartBar { get; }
-        public int     EndBar   { get; private set; } = -1;
-        public int     HighBar  { get; private set; }   // bar where session High was set
-        public int     LowBar   { get; private set; }   // bar where session Low was set
-        public decimal Open     { get; }
-        public decimal High     { get; private set; }
-        public decimal Low      { get; private set; }
+        public int StartBar { get; }
+        public int EndBar { get; private set; } = -1;
+        public int HighBar { get; private set; }   // bar where session High was set
+        public int LowBar { get; private set; }   // bar where session Low was set
+        public decimal Open { get; }
+        public decimal High { get; private set; }
+        public decimal Low { get; private set; }
 
         // Volume Profile — populated after Lock() via SetVPO()
         public VolumeProfile VPO { get; private set; }
@@ -24,7 +24,7 @@ namespace Atas_Indicators.Modules
         public decimal Range { get; private set; }
 
         // Internal levels
-        public decimal EQ  { get; private set; }
+        public decimal EQ { get; private set; }
         public decimal L75 { get; private set; }
         public decimal L25 { get; private set; }
 
@@ -61,8 +61,8 @@ namespace Atas_Indicators.Modules
         public decimal F266L { get; private set; }
 
         // Bar index of the first bar at/after drawEnd time (-1 = not yet reached)
-        public int      DayEndBar    { get; private set; } = -1;
-        public DateTime EstDate      { get; private set; }
+        public int DayEndBar { get; private set; } = -1;
+        public DateTime EstDate { get; private set; }
         public DateTime CloseEstDate { get; private set; }
 
         // First bar after session close where price sweeps (crosses) High or Low (-1 = not yet swept)
@@ -75,12 +75,12 @@ namespace Atas_Indicators.Modules
         internal SessionSnapshot(int startBar, decimal open, decimal high, decimal low, DateTime estDate)
         {
             StartBar = startBar;
-            HighBar  = startBar;
-            LowBar   = startBar;
-            Open     = open;
-            High     = high;
-            Low      = low;
-            EstDate  = estDate;
+            HighBar = startBar;
+            LowBar = startBar;
+            Open = open;
+            High = high;
+            Low = low;
+            EstDate = estDate;
         }
 
         public void SetVPO(VolumeProfile vpo) => VPO = vpo;
@@ -99,26 +99,26 @@ namespace Atas_Indicators.Modules
         internal void Expand(int bar, decimal high, decimal low)
         {
             if (high > High) { High = high; HighBar = bar; }
-            if (low  < Low)  { Low  = low;  LowBar  = bar; }
+            if (low < Low) { Low = low; LowBar = bar; }
         }
 
         // Compute all levels exactly once when the session window closes
         internal void Lock(int endBar, DateTime closeEstDate)
         {
-            EndBar       = endBar;
+            EndBar = endBar;
             CloseEstDate = closeEstDate;
-            Range  = High - Low;
+            Range = High - Low;
             if (Range <= 0m) return;
 
-            EQ  = Low + Range * 0.50m;
+            EQ = Low + Range * 0.50m;
             L75 = Low + Range * 0.75m;
             L25 = Low + Range * 0.25m;
 
-            D01U = High + Range * 0.1m;  D01L = Low - Range * 0.1m;
-            D02U = High + Range * 0.2m;  D02L = Low - Range * 0.2m;
-            D03U = High + Range * 0.3m;  D03L = Low - Range * 0.3m;
-            D10U = High + Range * 1.0m;  D10L = Low - Range * 1.0m;
-            D20U = High + Range * 2.0m;  D20L = Low - Range * 2.0m;
+            D01U = High + Range * 0.1m; D01L = Low - Range * 0.1m;
+            D02U = High + Range * 0.2m; D02L = Low - Range * 0.2m;
+            D03U = High + Range * 0.3m; D03L = Low - Range * 0.3m;
+            D10U = High + Range * 1.0m; D10L = Low - Range * 1.0m;
+            D20U = High + Range * 2.0m; D20L = Low - Range * 2.0m;
 
             F033U = High + Range * 0.33m; F033L = Low - Range * 0.33m;
             F066U = High + Range * 0.66m; F066L = Low - Range * 0.66m;

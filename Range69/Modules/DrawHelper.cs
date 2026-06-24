@@ -10,6 +10,7 @@ namespace Atas_Indicators.Modules
     //  LineStyle — shared style enum for all indicators in this project
     // ═══════════════════════════════════════════════════════════════════════════
     public enum LineStyle { Solid, Dotted, Dashed }
+    public enum HistogramAlign { LeftToRight, RightToLeft }
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  DrawHelper — VIEW primitives (static, reusable across all indicators)
@@ -32,20 +33,20 @@ namespace Atas_Indicators.Modules
         /// with an optional label rendered just past x2.</summary>
         public static void HLine(
             RenderContext ctx,
-            IChart        chart,
-            RenderFont    font,
-            decimal       price,
-            RenderPen     pen,
-            Color         labelColor,
-            int           x1,
-            int           x2,
-            string?       label = null)
+            IChart chart,
+            RenderFont font,
+            decimal price,
+            RenderPen pen,
+            Color labelColor,
+            int x1,
+            int x2,
+            string? label = null)
         {
             int y = chart.GetYByPrice(price);
             ctx.DrawLine(pen, x1, y, x2, y);
 
             if (!string.IsNullOrEmpty(label))
-                ctx.DrawString(label, font, labelColor, x2 + 3, y - 7);
+                ctx.DrawString(label, font, labelColor, x2 + 3, y - (int)(font.Size * 0.7f));
         }
 
         // ── Vertical line between two price levels ────────────────────────────
@@ -54,11 +55,11 @@ namespace Atas_Indicators.Modules
         /// spanning from <paramref name="priceTop"/> to <paramref name="priceBot"/>.</summary>
         public static void VLine(
             RenderContext ctx,
-            IChart        chart,
-            RenderPen     pen,
-            int           x,
-            decimal       priceTop,
-            decimal       priceBot)
+            IChart chart,
+            RenderPen pen,
+            int x,
+            decimal priceTop,
+            decimal priceBot)
         {
             ctx.DrawLine(pen, x, chart.GetYByPrice(priceTop),
                               x, chart.GetYByPrice(priceBot));
@@ -70,12 +71,12 @@ namespace Atas_Indicators.Modules
         /// <paramref name="priceBot"/> using a semi-transparent solid color.</summary>
         public static void FillZone(
             RenderContext ctx,
-            IChart        chart,
-            decimal       priceTop,
-            decimal       priceBot,
-            Color         color,
-            int           x1,
-            int           x2)
+            IChart chart,
+            decimal priceTop,
+            decimal priceBot,
+            Color color,
+            int x1,
+            int x2)
         {
             int yT = chart.GetYByPrice(priceTop);
             int yB = chart.GetYByPrice(priceBot);
@@ -90,18 +91,18 @@ namespace Atas_Indicators.Modules
         /// (inner and outer), an optional fill between them, and optional labels.
         /// Works for both the upper and lower leg in a single call pair.</summary>
         public static void FibBand(
-            RenderContext   ctx,
-            IChart          chart,
-            RenderFont      font,
-            decimal         inner,        // price closer to range (e.g. +0.33)
-            decimal         outer,        // price farther from range (e.g. +0.66)
+            RenderContext ctx,
+            IChart chart,
+            RenderFont font,
+            decimal inner,        // price closer to range (e.g. +0.33)
+            decimal outer,        // price farther from range (e.g. +0.66)
             FibBandSettings style,
-            bool            showLines,
-            bool            showBox,
-            string          labelInner,
-            string          labelOuter,
-            int             x1,
-            int             x2)
+            bool showLines,
+            bool showBox,
+            string labelInner,
+            string labelOuter,
+            int x1,
+            int x2)
         {
             if (showBox)
                 FillZone(ctx, chart, outer, inner, style.BoxColor, x1, x2);
@@ -116,6 +117,8 @@ namespace Atas_Indicators.Modules
 
         // ── Volume Profile: POC + Value Area fill + VAH/VAL lines ────────────
 
+        // xStart: where lines/fill begin (session open x0)
+        // labelX: right boundary — lines stop just before label, fill spans to here
         public static void Vpo(
             RenderContext ctx,
             IChart        chart,
@@ -124,14 +127,27 @@ namespace Atas_Indicators.Modules
             LineSettings  pocStyle,
             LineSettings  vaStyle,
             Color         fillColor,
-            int           x1,
-            int           x2)
+            Color         labelColor,
+            int           xStart,
+            int           labelX)
         {
             if (!vpo.IsReady) return;
-            FillZone(ctx, chart, vpo.VAH, vpo.VAL, fillColor, x1, x2);
-            HLine(ctx, chart, font, vpo.VAH, vaStyle.MakePen(),  vaStyle.Color,  x1, x2, "VAH");
-            HLine(ctx, chart, font, vpo.VAL, vaStyle.MakePen(),  vaStyle.Color,  x1, x2, "VAL");
-            HLine(ctx, chart, font, vpo.POC, pocStyle.MakePen(), pocStyle.Color, x1, x2, "POC");
+
+            int labelW  = (int)Math.Max(
+                ctx.MeasureString("VAH",  font).Width,
+                ctx.MeasureString("vPOC", font).Width);
+            int halfH   = (int)(font.Size * 0.7f);  // centers text vertically on line
+            int lx      = labelX - labelW;
+            int lineEnd = lx - 4;
+
+            FillZone(ctx, chart, vpo.VAH, vpo.VAL, fillColor, xStart, labelX);
+            HLine(ctx, chart, font, vpo.VAH, vaStyle.MakePen(),  vaStyle.Color,  xStart, lineEnd);
+            HLine(ctx, chart, font, vpo.VAL, vaStyle.MakePen(),  vaStyle.Color,  xStart, lineEnd);
+            HLine(ctx, chart, font, vpo.POC, pocStyle.MakePen(), pocStyle.Color, xStart, lineEnd);
+
+            ctx.DrawString("VAH",  font, vaStyle.Color,  lx, chart.GetYByPrice(vpo.VAH) - halfH);
+            ctx.DrawString("vPOC", font, pocStyle.Color, lx, chart.GetYByPrice(vpo.POC) - halfH);
+            ctx.DrawString("VAL",  font, vaStyle.Color,  lx, chart.GetYByPrice(vpo.VAL) - halfH);
         }
 
         // ── Volume Profile Histogram ──────────────────────────────────────────
@@ -140,21 +156,22 @@ namespace Atas_Indicators.Modules
 
         public static void VolumeHistogram(
             RenderContext ctx,
-            IChart        chart,
+            IChart chart,
             VolumeProfile vpo,
-            Color         barColor,     // bars outside value area
-            Color         vaColor,      // bars inside value area
-            Color         pocColor,     // POC bar
-            int           xLeft,        // session start bar x-position
-            int           xRight)       // session end bar x-position
+            Color barColor,
+            Color vaColor,
+            Color pocColor,
+            int xLeft,
+            int xRight,
+            int widthPct = 80,
+            HistogramAlign align = HistogramAlign.RightToLeft)
         {
             if (!vpo.IsReady || vpo.Distribution == null || vpo.MaxVolume <= 0) return;
 
-            int maxWidth = Math.Max(1, xRight - xLeft);
+            int maxWidth = Math.Max(1, (int)((xRight - xLeft) * widthPct / 100.0));
 
             foreach (var (price, vol) in vpo.Distribution)
             {
-                // Pixel row for this price tick
                 int yTop = chart.GetYByPrice(price + vpo.TickSize);
                 int yBot = chart.GetYByPrice(price);
                 if (yTop > yBot) (yTop, yBot) = (yBot, yTop);
@@ -163,13 +180,15 @@ namespace Atas_Indicators.Modules
                 int barW = (int)(vol / vpo.MaxVolume * maxWidth);
                 if (barW <= 0) continue;
 
-                Color c = (price == vpo.POC)
-                    ? pocColor
-                    : (price >= vpo.VAL && price <= vpo.VAH)
-                        ? vaColor
-                        : barColor;
+                Color c = (price == vpo.POC) ? pocColor
+                    : (price >= vpo.VAL && price <= vpo.VAH) ? vaColor
+                    : barColor;
 
-                ctx.FillRectangle(c, new Rectangle(xLeft, yTop, barW, h));
+                int barX = align == HistogramAlign.RightToLeft
+                    ? xRight - barW   // bars grow left from session close
+                    : xLeft;          // bars grow right from session open
+
+                ctx.FillRectangle(c, new Rectangle(barX, yTop, barW, h));
             }
         }
 
@@ -183,7 +202,7 @@ namespace Atas_Indicators.Modules
             {
                 LineStyle.Dotted => DashStyle.Dot,
                 LineStyle.Dashed => DashStyle.Dash,
-                _                => DashStyle.Solid
+                _ => DashStyle.Solid
             };
             return new RenderPen(color, width, dash);
         }
