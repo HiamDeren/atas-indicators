@@ -33,6 +33,16 @@ namespace Atas_Indicators
         [Display(Name = "Draw Until (EST)", GroupName = "Extension", Order = 1)]
         public TimeSpan DrawUntil { get; set; } = new(16, 15, 0);  // RTH close
 
+        // DrawAbovePrice exists on the base Indicator class but is [Browsable(false)]
+        // and not persisted — wrap it in our own property so it shows up in Settings
+        // and the user's choice actually survives a reload.
+        [Display(Name = "Draw Above Candles", GroupName = "Extension", Order = 2)]
+        public bool DrawAboveCandles
+        {
+            get => DrawAbovePrice;
+            set => DrawAbovePrice = value;
+        }
+
         // ═══════════════════════════════════════════════════════════════════════
         //  SETTINGS
         // ═══════════════════════════════════════════════════════════════════════

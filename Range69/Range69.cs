@@ -51,6 +51,16 @@ namespace Atas_Indicators
         [Display(Name = "Draw Until (EST)", GroupName = "General", Order = 4)]
         public TimeSpan DrawUntil { get; set; } = new(10, 0, 0);
 
+        // DrawAbovePrice exists on the base Indicator class but is [Browsable(false)]
+        // and not persisted — wrap it in our own property so it shows up in Settings
+        // and the user's choice actually survives a reload.
+        [Display(Name = "Draw Above Candles", GroupName = "General", Order = 5)]
+        public bool DrawAboveCandles
+        {
+            get => DrawAbovePrice;
+            set => DrawAbovePrice = value;
+        }
+
         // ═══════════════════════════════════════════════════════════════════════
         //  GROUP: Core Levels
         // ═══════════════════════════════════════════════════════════════════════
