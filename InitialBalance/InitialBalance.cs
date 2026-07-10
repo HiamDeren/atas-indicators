@@ -18,7 +18,8 @@ namespace Atas_Indicators
 
         private readonly SessionTracker _tracker = new(SessionOpen, SessionClose);
         private readonly VpoRenderer _vpo = new();
-        private int _vpoSessionStartBar = -1;
+        private int _vpoBuiltStartBar = -1;
+        private int _vpoBuiltEndBar = -1;
 
         private RenderFont? _font;
         private string _fontFamily = "Arial";
@@ -156,7 +157,8 @@ namespace Atas_Indicators
             {
                 _tracker.Reset();
                 _vpo.Reset();
-                _vpoSessionStartBar = -1;
+                _vpoBuiltStartBar = -1;
+                _vpoBuiltEndBar = -1;
                 return;
             }
 
@@ -166,20 +168,6 @@ namespace Atas_Indicators
 
             var c = GetCandle(bar);
             _tracker.Process(bar, c.Time, c.Open, c.High, c.Low);
-
-            // Feed VPO only while inside the Initial Balance window itself
-            var active = _tracker.Active;
-            if (active != null && ChartInfo != null)
-            {
-                if (active.StartBar != _vpoSessionStartBar)
-                {
-                    _vpo.Reset();
-                    _vpoSessionStartBar = active.StartBar;
-                }
-
-                _vpo.ValueAreaPct = ValueAreaPct / 100m;
-                _vpo.Feed(c, ChartInfo.PriceChartContainer.Step);
-            }
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -268,6 +256,20 @@ namespace Atas_Indicators
 
         private void PaintVpo(RenderContext ctx, IChart chart, SessionSnapshot s, int extendX2)
         {
+            // Rebuild once per distinct session (identified by its bar range) instead of
+            // feeding incrementally from OnCalculate — OnCalculate can re-fire multiple
+            // times for the same bar (live ticks), which would double-count volume there.
+            if (s.StartBar != _vpoBuiltStartBar || s.EndBar != _vpoBuiltEndBar)
+            {
+                _vpo.Reset();
+                _vpo.ValueAreaPct = ValueAreaPct / 100m;
+                for (int i = s.StartBar; i <= s.EndBar; i++)
+                    _vpo.Feed(GetCandle(i), chart.PriceChartContainer.Step);
+
+                _vpoBuiltStartBar = s.StartBar;
+                _vpoBuiltEndBar = s.EndBar;
+            }
+
             int vpoX1 = chart.GetXByBar(s.StartBar);
             int vpoX2 = chart.GetXByBar(s.EndBar + 1);
 

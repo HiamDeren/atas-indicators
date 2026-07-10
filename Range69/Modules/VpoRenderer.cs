@@ -2,7 +2,7 @@
 // VpoRenderer.cs — Reusable Volume Profile Renderer cho ATAS
 // Vẽ VPO cho MỘT KHOẢNG THỜI GIAN bất kỳ (session-scoped), không
 // còn phụ thuộc vào visible chart area — caller tự quyết định
-// vùng pixel [x1, x2] cần vẽ (vd: đúng khung giờ Initial Balance).
+// vùng pixel [x1, x2] cần vẽ (vd: đúng khung giờ session).
 //
 // USAGE trong indicator của anh:
 //   private readonly VpoRenderer _vpo = new();
