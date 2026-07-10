@@ -131,7 +131,7 @@ namespace Atas_Indicators
         public int ProfileWidthPct { get; set; } = 100;
 
         [Display(Name = "Show Delta", GroupName = "Volume Profile", Order = 103)]
-        public bool ShowDelta { get; set; } = false;
+        public bool ShowDelta { get; set; } = true;
 
         [Display(Name = "Delta Width %", GroupName = "Volume Profile", Order = 104)]
         [Range(5, 100)]

@@ -39,17 +39,13 @@ namespace Atas_Indicators.Modules
             Color         labelColor,
             int           x1,
             int           x2,
-            string?       label = null,
-            bool          labelAbove = true)
+            string?       label = null)
         {
             int y = chart.GetYByPrice(price);
             ctx.DrawLine(pen, x1, y, x2, y);
 
             if (!string.IsNullOrEmpty(label))
-            {
-                int ty = labelAbove ? y - 7 : y + 2;
-                ctx.DrawString(label, font, labelColor, x2 + 3, ty);
-            }
+                ctx.DrawString(label, font, labelColor, x2 + 3, y - (int)(font.Size * 0.7f));
         }
 
         // ── Vertical line between two price levels ────────────────────────────

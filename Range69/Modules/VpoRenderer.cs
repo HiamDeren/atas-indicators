@@ -193,11 +193,14 @@ namespace Atas_Indicators.Modules
             int profR = s.AnchorRight ? x2 : x1 + profW;
             int profL = profR - profW;
 
-            // Delta lane dùng scale riêng, nhỏ hơn VPO — theo % của profW, nhưng
-            // chặn trần theo số bar cố định (~30 bar) để không tràn xa khỏi box
-            // khi session dài (nhiều bar) — % của profW sẽ ra hàng trăm px nếu không chặn.
-            int deltaCap = Math.Max(10, (int)(chartInfo.PriceChartContainer.BarsWidth * 30));
-            int deltaMaxW = Math.Min(deltaCap, Math.Max(2, (int)(profW * s.DeltaWidthPct / 100.0)));
+            // Delta lane KHÔNG scale theo profW (độ rộng box session) — nếu scale
+            // theo box thì session ngắn (IB, 1 tiếng) luôn ra delta nhỏ hơn hẳn session
+            // dài (Range69 3 tiếng, Overnight 15.5 tiếng) dù cùng DeltaWidthPct%.
+            // Thay vào đó DeltaWidthPct% áp trực tiếp lên 1 trần cố định theo % độ rộng
+            // khung nhìn chart — cùng DeltaWidthPct thì mọi indicator ra cùng 1 độ rộng
+            // tuyệt đối, bất kể session dài ngắn khác nhau.
+            int deltaCap = Math.Max(20, (int)(context.ClipBounds.Width * 0.08));
+            int deltaMaxW = Math.Max(2, (int)(deltaCap * s.DeltaWidthPct / 100.0));
 
             // ── Tính pixel height mỗi bar (1 tick) ────────────
             // Lấy 2 giá trị Y liên tiếp để đo height thực tế trên chart hiện tại
