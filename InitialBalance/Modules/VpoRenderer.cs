@@ -45,16 +45,19 @@ namespace Atas_Indicators.Modules
         public bool   ShowPocLine      { get; set; } = true;
         public bool   ShowVaLines      { get; set; } = true;
         public bool   ShowLabels       { get; set; } = true;
-        public bool   ShowBidAskSplit  { get; set; } = false; // Chia histogram bid/ask
-        public Color  AskColor         { get; set; } = Color.FromArgb(160, 60,  180, 100);
-        public Color  BidColor         { get; set; } = Color.FromArgb(160, 200, 60,  60);
+
+        // Delta lane — dải riêng mọc ngược hướng VPO, độ rộng scale theo % của profW
+        public bool   ShowDelta            { get; set; } = false;
+        public int    DeltaWidthPct        { get; set; } = 40;
+        public Color  DeltaPositiveColor   { get; set; } = Color.FromArgb(210, 38,  194, 129);
+        public Color  DeltaNegativeColor   { get; set; } = Color.FromArgb(210, 231, 76,  60);
 
         // POC line style
         public int    PocLineWidth     { get; set; } = 2;
         public int    VaLineWidth      { get; set; } = 1;
 
         // Label font size
-        public int    FontSize         { get; set; } = 10;
+        public int    FontSize         { get; set; } = 8;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -73,6 +76,7 @@ namespace Atas_Indicators.Modules
         public decimal VAL          { get; private set; }
         public decimal TotalVolume  { get; private set; }
         public decimal MaxVolume    { get; private set; }
+        public decimal MaxAbsDelta  { get; private set; }
         public bool    IsReady      => _volMap.Count > 0 && POC > 0;
 
         // VA percent (default 70%)
@@ -84,7 +88,7 @@ namespace Atas_Indicators.Modules
             _volMap.Clear();
             _askMap.Clear();
             _bidMap.Clear();
-            POC = VAH = VAL = TotalVolume = MaxVolume = 0;
+            POC = VAH = VAL = TotalVolume = MaxVolume = MaxAbsDelta = 0;
         }
 
         // ── Feed một bar vào profile ───────────────────────────
@@ -121,16 +125,22 @@ namespace Atas_Indicators.Modules
             if (_volMap.Count == 0) return;
 
             TotalVolume = 0m;
-            decimal pocPrice = 0m, pocVol = 0m;
+            decimal pocPrice = 0m, pocVol = 0m, maxAbsDelta = 0m;
 
             foreach (var (price, vol) in _volMap)
             {
                 TotalVolume += vol;
                 if (vol > pocVol) { pocVol = vol; pocPrice = price; }
+
+                _askMap.TryGetValue(price, out var askVol);
+                _bidMap.TryGetValue(price, out var bidVol);
+                var absDelta = Math.Abs(askVol - bidVol);
+                if (absDelta > maxAbsDelta) maxAbsDelta = absDelta;
             }
 
-            POC       = pocPrice;
-            MaxVolume = pocVol;
+            POC         = pocPrice;
+            MaxVolume   = pocVol;
+            MaxAbsDelta = maxAbsDelta;
 
             if (TotalVolume <= 0) return;
 
@@ -183,6 +193,9 @@ namespace Atas_Indicators.Modules
             int profR = s.AnchorRight ? x2 : x1 + profW;
             int profL = profR - profW;
 
+            // Delta lane dùng scale riêng, nhỏ hơn VPO — theo % của profW
+            int deltaMaxW = Math.Max(2, (int)(profW * s.DeltaWidthPct / 100.0));
+
             // ── Tính pixel height mỗi bar (1 tick) ────────────
             // Lấy 2 giá trị Y liên tiếp để đo height thực tế trên chart hiện tại
             int yTick0 = chartInfo.GetYByPrice(POC,           false);
@@ -204,34 +217,25 @@ namespace Atas_Indicators.Modules
                 // AnchorRight = false → bar flush at profL, grows RIGHTWARD (left → right)
                 int barLeft = s.AnchorRight ? profR - fullW : profL;
 
-                if (s.ShowBidAskSplit && !isPoc)
+                var clr = isPoc ? s.PocColor
+                        : isVa  ? s.VaColor
+                        :         s.BodyColor;
+                context.FillRectangle(clr, new Rectangle(barLeft, y, fullW, barH));
+
+                // Delta lane — mirrored off the SAME anchor edge, growing the
+                // OPPOSITE direction from the volume profile (outside the box)
+                if (s.ShowDelta && MaxAbsDelta > 0)
                 {
-                    // Bid luôn nằm bên trái, Ask luôn nằm bên phải trong mỗi bar —
-                    // giữ nguyên quy ước bất kể hướng grow của toàn bộ profile
                     _askMap.TryGetValue(price, out var askVol);
                     _bidMap.TryGetValue(price, out var bidVol);
-                    decimal totalAtLevel = askVol + bidVol;
-
-                    if (totalAtLevel > 0)
+                    decimal delta = askVol - bidVol;
+                    int deltaW = (int)(deltaMaxW * Math.Abs(delta) / MaxAbsDelta);
+                    if (deltaW > 0)
                     {
-                        int askW = (int)(fullW * askVol / totalAtLevel);
-                        int bidW = fullW - askW;
-
-                        context.FillRectangle(s.BidColor, new Rectangle(barLeft,          y, bidW, barH));
-                        context.FillRectangle(s.AskColor, new Rectangle(barLeft + bidW,   y, askW, barH));
+                        int deltaLeft = s.AnchorRight ? profR : profL - deltaW;
+                        var deltaColor = delta >= 0 ? s.DeltaPositiveColor : s.DeltaNegativeColor;
+                        context.FillRectangle(deltaColor, new Rectangle(deltaLeft, y, deltaW, barH));
                     }
-                    else
-                    {
-                        context.FillRectangle(s.BodyColor, new Rectangle(barLeft, y, fullW, barH));
-                    }
-                }
-                else
-                {
-                    // Single color mode
-                    var clr = isPoc ? s.PocColor
-                            : isVa  ? s.VaColor
-                            :         s.BodyColor;
-                    context.FillRectangle(clr, new Rectangle(barLeft, y, fullW, barH));
                 }
             }
 
@@ -247,47 +251,26 @@ namespace Atas_Indicators.Modules
                 if (s.ShowLabels)
                 {
                     var font = new RenderFont("Arial", s.FontSize);
-                    context.DrawString("POC", font, s.PocLineColor, lineR + 3, yPoc - s.FontSize - 1);
+                    context.DrawString("POC", font, s.PocLineColor, lineR + 3, yPoc - (int)(font.Size * 0.7f));
                 }
             }
 
-            // ── VAH / VAL lines (dashed) ───────────────────────
+            // ── VAH / VAL lines (solid, giống POC) ─────────────
             if (s.ShowVaLines && VAH > 0 && VAL > 0)
             {
                 int yVah = chartInfo.GetYByPrice(VAH, false);
                 int yVal = chartInfo.GetYByPrice(VAL, false);
 
                 var vaPen = new RenderPen(s.VaLineColor, s.VaLineWidth);
-                DrawDashedHLine(context, vaPen, x1, lineR, yVah);
-                DrawDashedHLine(context, vaPen, x1, lineR, yVal);
+                context.DrawLine(vaPen, x1, yVah, lineR, yVah);
+                context.DrawLine(vaPen, x1, yVal, lineR, yVal);
 
                 if (s.ShowLabels)
                 {
                     var font = new RenderFont("Arial", s.FontSize);
-                    context.DrawString($"VAH {VAH:F2}", font, s.VaLineColor, lineR + 3, yVah - s.FontSize - 1);
-                    context.DrawString($"VAL {VAL:F2}", font, s.VaLineColor, lineR + 3, yVal + 2);
+                    context.DrawString("VAH", font, s.VaLineColor, lineR + 3, yVah - (int)(font.Size * 0.7f));
+                    context.DrawString("VAL", font, s.VaLineColor, lineR + 3, yVal - (int)(font.Size * 0.7f));
                 }
-            }
-        }
-
-        // ── Helper: vẽ dashed horizontal line ─────────────────
-        // ATAS RenderContext không có DrawLine với DashStyle trực tiếp,
-        // nên ta tự vẽ đoạn ngắt quãng
-        private static void DrawDashedHLine(
-            RenderContext context,
-            RenderPen pen,
-            int x1, int x2, int y,
-            int dashLen = 6, int gapLen = 4)
-        {
-            int x = x1;
-            bool drawing = true;
-            while (x < x2)
-            {
-                int segEnd = Math.Min(x + (drawing ? dashLen : gapLen), x2);
-                if (drawing)
-                    context.DrawLine(pen, x, y, segEnd, y);
-                x = segEnd;
-                drawing = !drawing;
             }
         }
     }

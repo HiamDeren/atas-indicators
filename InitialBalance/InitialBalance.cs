@@ -81,12 +81,12 @@ namespace Atas_Indicators
         public LineSettings SD10 { get; set; } = new(Color.FromArgb(130, 130, 145), 1, LineStyle.Dotted);
 
         [Display(Name = "Show ±1.5 SD", GroupName = "Standard Deviations", Order = 70)]
-        public bool ShowSD15 { get; set; } = true;
+        public bool ShowSD15 { get; set; } = false;
         [Display(Name = "±1.5 SD Style", GroupName = "Standard Deviations", Order = 71)]
         public LineSettings SD15 { get; set; } = new(Color.FromArgb(110, 110, 130), 1, LineStyle.Dotted);
 
         [Display(Name = "Show ±2 SD", GroupName = "Standard Deviations", Order = 80)]
-        public bool ShowSD20 { get; set; } = true;
+        public bool ShowSD20 { get; set; } = false;
         [Display(Name = "±2 SD Style", GroupName = "Standard Deviations", Order = 81)]
         public LineSettings SD20 { get; set; } = new(Color.FromArgb(95, 95, 115), 1, LineStyle.Dotted);
 
@@ -101,29 +101,41 @@ namespace Atas_Indicators
         public int ValueAreaPct { get; set; } = 70;
 
         [Display(Name = "Profile Width %", GroupName = "Volume Profile", Order = 102)]
-        [Range(5, 100)]
+        [Range(5, 150)]
         public int ProfileWidthPct { get; set; } = 100;
 
-        [Display(Name = "Show Bid/Ask Split", GroupName = "Volume Profile", Order = 103)]
-        public bool ShowBidAskSplit { get; set; } = false;
+        [Display(Name = "Show Delta", GroupName = "Volume Profile", Order = 103)]
+        public bool ShowDelta { get; set; } = false;
 
-        [Display(Name = "Show POC / VA Lines", GroupName = "Volume Profile", Order = 104)]
+        [Display(Name = "Delta Width %", GroupName = "Volume Profile", Order = 104)]
+        [Range(5, 100)]
+        public int DeltaWidthPct { get; set; } = 45;
+
+        [Display(Name = "Show POC / VA Lines", GroupName = "Volume Profile", Order = 105)]
         public bool ShowVpoLines { get; set; } = true;
 
-        [Display(Name = "Extend POC / VA Lines", GroupName = "Volume Profile", Order = 105)]
-        public bool ExtendVpoLines { get; set; } = true;
+        [Display(Name = "Extend POC / VA Lines", GroupName = "Volume Profile", Order = 106)]
+        public bool ExtendVpoLines { get; set; } = false;
 
-        [Display(Name = "Profile Color", GroupName = "Volume Profile", Order = 106)]
-        public Color VpoBodyColor { get; set; } = Color.FromArgb(150, 41, 182, 246);
+        // Gray outside the value area, teal inside it — kept far apart in hue
+        // so the two zones read as distinct at a glance (not just light/dark blue).
+        [Display(Name = "Profile Color", GroupName = "Volume Profile", Order = 107)]
+        public Color VpoBodyColor { get; set; } = Color.FromArgb(160, 130, 130, 130);
 
-        [Display(Name = "Value Area Color", GroupName = "Volume Profile", Order = 107)]
-        public Color VpoValueAreaColor { get; set; } = Color.FromArgb(190, 3, 169, 244);
+        [Display(Name = "Value Area Color", GroupName = "Volume Profile", Order = 108)]
+        public Color VpoValueAreaColor { get; set; } = Color.FromArgb(190, 21, 137, 148);
 
-        [Display(Name = "POC Line Color", GroupName = "Volume Profile", Order = 108)]
-        public Color VpoPocLineColor { get; set; } = Color.FromArgb(255, 239, 83, 80);
+        [Display(Name = "POC Line Color", GroupName = "Volume Profile", Order = 109)]
+        public Color VpoPocLineColor { get; set; } = Color.FromArgb(255, 235, 164, 63);
 
-        [Display(Name = "VA Line Color", GroupName = "Volume Profile", Order = 109)]
-        public Color VpoValueAreaLineColor { get; set; } = Color.FromArgb(255, 255, 193, 7);
+        [Display(Name = "VA Line Color", GroupName = "Volume Profile", Order = 110)]
+        public Color VpoValueAreaLineColor { get; set; } = Color.FromArgb(255, 79, 195, 247);
+
+        [Display(Name = "Delta Positive Color", GroupName = "Volume Profile", Order = 111)]
+        public Color DeltaPositiveColor { get; set; } = Color.FromArgb(210, 38, 194, 129);
+
+        [Display(Name = "Delta Negative Color", GroupName = "Volume Profile", Order = 112)]
+        public Color DeltaNegativeColor { get; set; } = Color.FromArgb(210, 231, 76, 60);
 
         // ═══════════════════════════════════════════════════════════════════════
         //  CONSTRUCTOR
@@ -263,7 +275,8 @@ namespace Atas_Indicators
             {
                 ProfileWidthPct = ProfileWidthPct,
                 AnchorRight = false, // profile flush-left, grows left → right across the IB box
-                ShowBidAskSplit = ShowBidAskSplit,
+                ShowDelta = ShowDelta,
+                DeltaWidthPct = DeltaWidthPct,
                 ShowPocLine = ShowVpoLines,
                 ShowVaLines = ShowVpoLines,
                 ShowLabels = ShowVpoLines,
@@ -272,6 +285,8 @@ namespace Atas_Indicators
                 PocColor = VpoValueAreaColor, // no separate POC-bar tint — matches uniform profile look
                 PocLineColor = VpoPocLineColor,
                 VaLineColor = VpoValueAreaLineColor,
+                DeltaPositiveColor = DeltaPositiveColor,
+                DeltaNegativeColor = DeltaNegativeColor,
             };
 
             _vpo.Draw(ctx, chart, style, vpoX1, vpoX2, ExtendVpoLines ? extendX2 : (int?)null);

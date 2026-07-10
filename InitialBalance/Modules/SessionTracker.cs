@@ -141,7 +141,7 @@ namespace Atas_Indicators.Modules
         {
             var t = TimeZoneInfo.ConvertTimeFromUtc(utcTime, EasternTZ).TimeOfDay;
             return _start < _end
-                ? t >= _start && t < _end           // e.g. 09:30–10:30
+                ? t >= _start && t <= _end          // e.g. 09:30–10:30, end bar included
                 : t >= _start || t < _end;          // e.g. 18:00–06:00 overnight
         }
 

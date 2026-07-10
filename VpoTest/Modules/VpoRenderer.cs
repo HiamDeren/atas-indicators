@@ -203,7 +203,7 @@ namespace Atas_Indicators.Modules
 
                 if (s.ShowBidAskSplit && !isPoc)
                 {
-                    // Bid luôn nằm bên trái, Ask luôn nằm bên phải trong mỗi bar —
+                    // Ask nằm bên trái, Bid nằm bên phải trong mỗi bar —
                     // giữ nguyên quy ước bất kể hướng grow của toàn bộ profile
                     _askMap.TryGetValue(price, out var askVol);
                     _bidMap.TryGetValue(price, out var bidVol);
@@ -211,11 +211,11 @@ namespace Atas_Indicators.Modules
 
                     if (totalAtLevel > 0)
                     {
-                        int askW = (int)(fullW * askVol / totalAtLevel);
-                        int bidW = fullW - askW;
+                        int bidW = (int)(fullW * bidVol / totalAtLevel);
+                        int askW = fullW - bidW;
 
-                        context.FillRectangle(s.BidColor, new Rectangle(barLeft,        y, bidW, barH));
-                        context.FillRectangle(s.AskColor, new Rectangle(barLeft + bidW, y, askW, barH));
+                        context.FillRectangle(s.AskColor, new Rectangle(barLeft,        y, askW, barH));
+                        context.FillRectangle(s.BidColor, new Rectangle(barLeft + askW, y, bidW, barH));
                     }
                     else
                     {
