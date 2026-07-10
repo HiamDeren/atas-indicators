@@ -43,7 +43,7 @@ namespace Atas_Indicators
         }
 
         [Display(Name = "Label Color", GroupName = "General", Order = 2)]
-        public Color LabelColor { get; set; } = Color.FromArgb(63, 63, 63);
+        public Color LabelColor { get; set; } = Color.FromArgb(210, 210, 210);
 
         [Display(Name = "Extension Mode", GroupName = "General", Order = 3)]
         public ExtendMode Extension { get; set; } = ExtendMode.ToTime;
@@ -58,35 +58,37 @@ namespace Atas_Indicators
         [Display(Name = "Show High / Low", GroupName = "IB Range", Order = 10)]
         public bool ShowHighLow { get; set; } = true;
         [Display(Name = "High / Low Style", GroupName = "IB Range", Order = 11)]
-        public LineSettings HighLow { get; set; } = new(Color.FromArgb(40, 40, 40), 2);
+        public LineSettings HighLow { get; set; } = new(Color.FromArgb(220, 220, 225), 1);
 
         [Display(Name = "Show EQ", GroupName = "IB Range", Order = 20)]
         public bool ShowEQ { get; set; } = true;
         [Display(Name = "EQ Style", GroupName = "IB Range", Order = 21)]
-        public LineSettings EQ { get; set; } = new(Color.FromArgb(192, 80, 77), 1, LineStyle.Dotted);
+        public LineSettings EQ { get; set; } = new(Color.FromArgb(233, 105, 105), 1, LineStyle.Dotted);
 
         // ═══════════════════════════════════════════════════════════════════════
         //  GROUP: Standard Deviations  (±0.5, ±1, ±1.5, ±2)
+        //  Lighter = closer to the range, dimmer = further out — but still
+        //  visible against a near-black chart background.
         // ═══════════════════════════════════════════════════════════════════════
         [Display(Name = "Show ±0.5 SD", GroupName = "Standard Deviations", Order = 50)]
         public bool ShowSD05 { get; set; } = true;
         [Display(Name = "±0.5 SD Style", GroupName = "Standard Deviations", Order = 51)]
-        public LineSettings SD05 { get; set; } = new(Color.FromArgb(140, 140, 140), 1, LineStyle.Dotted);
+        public LineSettings SD05 { get; set; } = new(Color.FromArgb(150, 150, 160), 1, LineStyle.Dotted);
 
         [Display(Name = "Show ±1 SD", GroupName = "Standard Deviations", Order = 60)]
         public bool ShowSD10 { get; set; } = true;
         [Display(Name = "±1 SD Style", GroupName = "Standard Deviations", Order = 61)]
-        public LineSettings SD10 { get; set; } = new(Color.FromArgb(110, 110, 110), 1, LineStyle.Dotted);
+        public LineSettings SD10 { get; set; } = new(Color.FromArgb(130, 130, 145), 1, LineStyle.Dotted);
 
         [Display(Name = "Show ±1.5 SD", GroupName = "Standard Deviations", Order = 70)]
         public bool ShowSD15 { get; set; } = true;
         [Display(Name = "±1.5 SD Style", GroupName = "Standard Deviations", Order = 71)]
-        public LineSettings SD15 { get; set; } = new(Color.FromArgb(90, 90, 90), 1, LineStyle.Dotted);
+        public LineSettings SD15 { get; set; } = new(Color.FromArgb(110, 110, 130), 1, LineStyle.Dotted);
 
         [Display(Name = "Show ±2 SD", GroupName = "Standard Deviations", Order = 80)]
         public bool ShowSD20 { get; set; } = true;
         [Display(Name = "±2 SD Style", GroupName = "Standard Deviations", Order = 81)]
-        public LineSettings SD20 { get; set; } = new(Color.FromArgb(70, 70, 70), 1, LineStyle.Dotted);
+        public LineSettings SD20 { get; set; } = new(Color.FromArgb(95, 95, 115), 1, LineStyle.Dotted);
 
         // ═══════════════════════════════════════════════════════════════════════
         //  GROUP: Volume Profile (IB window only, 9:30–10:30)
@@ -110,6 +112,18 @@ namespace Atas_Indicators
 
         [Display(Name = "Extend POC / VA Lines", GroupName = "Volume Profile", Order = 105)]
         public bool ExtendVpoLines { get; set; } = true;
+
+        [Display(Name = "Profile Color", GroupName = "Volume Profile", Order = 106)]
+        public Color VpoBodyColor { get; set; } = Color.FromArgb(150, 41, 182, 246);
+
+        [Display(Name = "Value Area Color", GroupName = "Volume Profile", Order = 107)]
+        public Color VpoValueAreaColor { get; set; } = Color.FromArgb(190, 3, 169, 244);
+
+        [Display(Name = "POC Line Color", GroupName = "Volume Profile", Order = 108)]
+        public Color VpoPocLineColor { get; set; } = Color.FromArgb(255, 239, 83, 80);
+
+        [Display(Name = "VA Line Color", GroupName = "Volume Profile", Order = 109)]
+        public Color VpoValueAreaLineColor { get; set; } = Color.FromArgb(255, 255, 193, 7);
 
         // ═══════════════════════════════════════════════════════════════════════
         //  CONSTRUCTOR
@@ -253,6 +267,11 @@ namespace Atas_Indicators
                 ShowPocLine = ShowVpoLines,
                 ShowVaLines = ShowVpoLines,
                 ShowLabels = ShowVpoLines,
+                BodyColor = VpoBodyColor,
+                VaColor = VpoValueAreaColor,
+                PocColor = VpoValueAreaColor, // no separate POC-bar tint — matches uniform profile look
+                PocLineColor = VpoPocLineColor,
+                VaLineColor = VpoValueAreaLineColor,
             };
 
             _vpo.Draw(ctx, chart, style, vpoX1, vpoX2, ExtendVpoLines ? extendX2 : (int?)null);
