@@ -134,16 +134,41 @@ namespace Atas_Indicators
             var chart = ChartInfo;
             if (layout != DrawingLayouts.Final || chart == null) return;
 
+            // Live session in progress — draw it growing in real time instead of
+            // waiting for the 9:30 close. Sweep tracking only makes sense once the
+            // range is finalized, so both sides just extend to CurrentBar while live.
+            var live = _tracker.Active;
+            if (live != null && live.Range > 0)
+            {
+                int lxEnd = chart.GetXByBar(CurrentBar);
+                if (lxEnd < ctx.ClipBounds.Left) return;
+
+                _font ??= new RenderFont("Arial", 8);
+
+                if (ShowHighLow)
+                {
+                    var pen = HighLow.MakePen();
+                    DrawHelper.HLine(ctx, chart, _font!, live.High, pen, HighLow.Color,
+                        chart.GetXByBar(live.HighBar), lxEnd, "ONH");
+                    DrawHelper.HLine(ctx, chart, _font!, live.Low,  pen, HighLow.Color,
+                        chart.GetXByBar(live.LowBar),  lxEnd, "ONL");
+                }
+
+                if (ShowVpo)
+                    PaintVpo(ctx, chart, live, lxEnd);
+                return;
+            }
+
             var s = _tracker.Last;
             if (s == null || !s.IsReady) return;
-
-            _font ??= new RenderFont("Arial", 8);
 
             int x1     = chart.GetXByBar(s.EndBar);
             int xHigh2 = ComputeX2(ctx, chart, s, s.HighSweepBar);
             int xLow2  = ComputeX2(ctx, chart, s, s.LowSweepBar);
 
             if (x1 > ctx.ClipBounds.Right || Math.Max(xHigh2, xLow2) < ctx.ClipBounds.Left) return;
+
+            _font ??= new RenderFont("Arial", 8);
 
             PaintBoundary(ctx, chart, s, x1);
 

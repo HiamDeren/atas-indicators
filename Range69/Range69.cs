@@ -203,20 +203,38 @@ namespace Atas_Indicators
             var chart = ChartInfo;
             if (layout != DrawingLayouts.Final || chart == null) return;
 
+            // Live session in progress — draw it growing in real time instead of
+            // waiting for the 9:00 close. Falls back to the last closed session
+            // (extended forward per Extension mode) once nothing is active.
+            var live = _tracker.Active;
+            if (live != null && live.Range > 0)
+            {
+                int lx1 = chart.GetXByBar(live.StartBar);
+                int lx2 = chart.GetXByBar(CurrentBar);
+                PaintSession(ctx, chart, live, lx1, lx2, drawBoundary: false);
+                return;
+            }
+
             var s = _tracker.Last;
             if (s == null || !s.IsReady) return;
-
-            _font ??= new RenderFont(FontFamily, FontSize);
 
             // x1 = first bar after session (9:00), x2 = draw end
             int x1 = chart.GetXByBar(s.EndBar + 1);
             int x2 = ComputeX2(ctx, chart, s);
+            PaintSession(ctx, chart, s, x1, x2, drawBoundary: true);
+        }
 
+        private void PaintSession(RenderContext ctx, IChart chart, SessionSnapshot s, int x1, int x2, bool drawBoundary)
+        {
             if (x1 > ctx.ClipBounds.Right || x2 < ctx.ClipBounds.Left) return;
 
-            // Vertical boundary at session close
-            DrawHelper.VLine(ctx, chart,
-                DrawHelper.MakePen(HighLow.Color, 1, LineStyle.Dotted), x1, s.High, s.Low);
+            _font ??= new RenderFont(FontFamily, FontSize);
+
+            // Vertical boundary at session close (closed sessions only — a live
+            // session has no close boundary yet)
+            if (drawBoundary)
+                DrawHelper.VLine(ctx, chart,
+                    DrawHelper.MakePen(HighLow.Color, 1, LineStyle.Dotted), x1, s.High, s.Low);
 
             // Horizontal levels extending x1 → x2
             PaintCore(ctx, chart, s, x1, x2);

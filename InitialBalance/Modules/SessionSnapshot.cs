@@ -66,18 +66,31 @@ namespace Atas_Indicators.Modules
         // Called by SessionTracker when the RTH close bar is found
         internal void SetDayEnd(int bar) { if (DayEndBar < 0) DayEndBar = bar; }
 
-        // Expand H/L while the session is still live
+        // Expand H/L while the session is still live. Also advances EndBar and
+        // recomputes levels so the session can be rendered progressively (live
+        // preview) before it actually closes — Lock() later overwrites EndBar
+        // with the authoritative final value once the window truly ends.
         internal void Expand(int bar, decimal high, decimal low)
         {
             if (high > High) { High = high; HighBar = bar; }
             if (low < Low) { Low = low; LowBar = bar; }
+            EndBar = bar;
+            RecomputeLevels();
         }
 
-        // Compute all levels exactly once when the session window closes
+        // Called once when the session window closes — freezes EndBar/CloseEstDate
+        // at their final values (Expand() no longer runs after this).
         internal void Lock(int endBar, DateTime closeEstDate)
         {
             EndBar = endBar;
             CloseEstDate = closeEstDate;
+            RecomputeLevels();
+        }
+
+        // Derives all projection levels from the current High/Low/Range.
+        // Safe to call repeatedly (live) or once (closed) — same math either way.
+        private void RecomputeLevels()
+        {
             Range = High - Low;
             if (Range <= 0m) return;
 

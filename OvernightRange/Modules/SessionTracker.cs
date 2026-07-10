@@ -104,6 +104,7 @@ namespace Atas_Indicators.Modules
         {
             var estDate = ToEastern(utcTime).Date;
             _active = new SessionSnapshot(bar, open, high, low, estDate);
+            _active.Expand(bar, high, low); // seeds EndBar + levels so bar 0 renders immediately
         }
 
         private void CloseSession(int bar, DateTime utcTime)
