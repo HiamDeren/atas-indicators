@@ -53,16 +53,6 @@ namespace Atas_Indicators
         [Display(Name = "Draw Until (EST)", GroupName = "General", Order = 4)]
         public TimeSpan DrawUntil { get; set; } = new(12, 0, 0);
 
-        // DrawAbovePrice exists on the base Indicator class but is [Browsable(false)]
-        // and not persisted — wrap it in our own property so it shows up in Settings
-        // and the user's choice actually survives a reload.
-        [Display(Name = "Draw Above Candles", GroupName = "General", Order = 5)]
-        public bool DrawAboveCandles
-        {
-            get => DrawAbovePrice;
-            set => DrawAbovePrice = value;
-        }
-
         // ═══════════════════════════════════════════════════════════════════════
         //  GROUP: IB Range
         // ═══════════════════════════════════════════════════════════════════════
@@ -120,7 +110,7 @@ namespace Atas_Indicators
 
         [Display(Name = "Delta Width %", GroupName = "Volume Profile", Order = 104)]
         [Range(5, 100)]
-        public int DeltaWidthPct { get; set; } = 45;
+        public int DeltaWidthPct { get; set; } = 80;
 
         [Display(Name = "Show POC / VA Lines", GroupName = "Volume Profile", Order = 105)]
         public bool ShowVpoLines { get; set; } = true;
