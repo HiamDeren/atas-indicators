@@ -25,8 +25,24 @@ namespace Atas_Indicators.Modules
         }
 
         // ── Config ────────────────────────────────────────────────────────────
-        private readonly TimeSpan _start;
-        private readonly TimeSpan _end;
+        private TimeSpan _start;
+        private TimeSpan _end;
+
+        // Settable at runtime so the user can redefine the tracked window from
+        // Settings (e.g. change 6:00-9:00 to 20:00-21:00) — changing either edge
+        // wipes any in-progress/closed session, since it no longer applies to the
+        // new window.
+        public TimeSpan Start
+        {
+            get => _start;
+            set { if (_start != value) { _start = value; Reset(); } }
+        }
+
+        public TimeSpan End
+        {
+            get => _end;
+            set { if (_end != value) { _end = value; Reset(); } }
+        }
 
         // Settable so indicators can change it at runtime (e.g. user edits DrawUntil parameter)
         public TimeSpan DrawEnd { get; set; }

@@ -8,15 +8,13 @@ using OFT.Rendering.Tools;
 
 namespace Atas_Indicators
 {
-    [DisplayName("[₢] Range69")]
+    [DisplayName("[₢] TimeBase Range")]
     [Category("My Indicators")]
-    public class Range69 : Indicator
+    public class TimeBaseRange : Indicator
     {
-        // Session 6:00–9:00 EST, inclusive of the 9:00 bar (EndBar tracked via _lastInBar)
-        private static readonly TimeSpan SessionOpen = new(6, 0, 0);
-        private static readonly TimeSpan SessionClose = new(9, 0, 0);
-
-        private readonly SessionTracker _tracker = new(SessionOpen, SessionClose);
+        // Window is fully user-configurable via RangeStart/RangeEnd below, kept in
+        // sync with the tracker every OnCalculate call.
+        private readonly SessionTracker _tracker;
         private readonly VpoRenderer _vpo = new();
         private int _vpoBuiltStartBar = -1;
         private int _vpoBuiltEndBar = -1;
@@ -27,14 +25,20 @@ namespace Atas_Indicators
         // ═══════════════════════════════════════════════════════════════════════
         //  GROUP: General
         // ═══════════════════════════════════════════════════════════════════════
-        [Display(Name = "Font Family", GroupName = "General", Order = 0)]
+        [Display(Name = "Range Start (EST)", GroupName = "General", Order = 0)]
+        public TimeSpan RangeStart { get; set; } = new(6, 0, 0);
+
+        [Display(Name = "Range End (EST)", GroupName = "General", Order = 1)]
+        public TimeSpan RangeEnd { get; set; } = new(9, 0, 0);
+
+        [Display(Name = "Font Family", GroupName = "General", Order = 2)]
         public string FontFamily
         {
             get => _fontFamily;
             set { if (_fontFamily != value) { _fontFamily = value; _font = null; } }
         }
 
-        [Display(Name = "Font Size", GroupName = "General", Order = 1)]
+        [Display(Name = "Font Size", GroupName = "General", Order = 3)]
         [Range(6, 32)]
         public int FontSize
         {
@@ -42,13 +46,13 @@ namespace Atas_Indicators
             set { if (_fontSize != value) { _fontSize = value; _font = null; } }
         }
 
-        [Display(Name = "Label Color", GroupName = "General", Order = 2)]
+        [Display(Name = "Label Color", GroupName = "General", Order = 4)]
         public Color LabelColor { get; set; } = Color.FromArgb(210, 210, 210);
 
-        [Display(Name = "Extension Mode", GroupName = "General", Order = 3)]
+        [Display(Name = "Extension Mode", GroupName = "General", Order = 5)]
         public ExtendMode Extension { get; set; } = ExtendMode.ToTime;
 
-        [Display(Name = "Draw Until (EST)", GroupName = "General", Order = 4)]
+        [Display(Name = "Draw Until (EST)", GroupName = "General", Order = 6)]
         public TimeSpan DrawUntil { get; set; } = new(10, 0, 0);
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -117,7 +121,7 @@ namespace Atas_Indicators
         public FibBandSettings Fib233 { get; set; } = new(Color.FromArgb(57, 107, 167));
 
         // ═══════════════════════════════════════════════════════════════════════
-        //  GROUP: Volume Profile (session window only, 6:00–9:00)
+        //  GROUP: Volume Profile (scoped to the RangeStart–RangeEnd window only)
         // ═══════════════════════════════════════════════════════════════════════
         [Display(Name = "Show Volume Profile", GroupName = "Volume Profile", Order = 100)]
         public bool ShowVpo { get; set; } = true;
@@ -166,8 +170,9 @@ namespace Atas_Indicators
         // ═══════════════════════════════════════════════════════════════════════
         //  CONSTRUCTOR
         // ═══════════════════════════════════════════════════════════════════════
-        public Range69() : base(true)
+        public TimeBaseRange() : base(true)
         {
+            _tracker = new SessionTracker(RangeStart, RangeEnd);
             DenyToChangePanel = true;
             EnableCustomDrawing = true;
             SubscribeToDrawingEvents(DrawingLayouts.Final);
@@ -187,6 +192,10 @@ namespace Atas_Indicators
                 return;
             }
 
+            // Re-applying every bar is cheap and picks up live Settings edits —
+            // Start/End setters auto-reset the tracker when the user changes them.
+            _tracker.Start = RangeStart;
+            _tracker.End = RangeEnd;
             _tracker.DrawEnd = Extension == ExtendMode.ToTime
                 ? DrawUntil
                 : new TimeSpan(16, 15, 0); // market close — freezes DayEndBar at 16:14
@@ -204,7 +213,7 @@ namespace Atas_Indicators
             if (layout != DrawingLayouts.Final || chart == null) return;
 
             // Live session in progress — draw it growing in real time instead of
-            // waiting for the 9:00 close. Falls back to the last closed session
+            // waiting for RangeEnd. Falls back to the last closed session
             // (extended forward per Extension mode) once nothing is active.
             var live = _tracker.Active;
             if (live != null && live.Range > 0)
@@ -218,7 +227,7 @@ namespace Atas_Indicators
             var s = _tracker.Last;
             if (s == null || !s.IsReady) return;
 
-            // x1 = first bar after session (9:00), x2 = draw end
+            // x1 = first bar after RangeEnd, x2 = draw end
             int x1 = chart.GetXByBar(s.EndBar + 1);
             int x2 = ComputeX2(ctx, chart, s);
             PaintSession(ctx, chart, s, x1, x2, drawBoundary: true);
