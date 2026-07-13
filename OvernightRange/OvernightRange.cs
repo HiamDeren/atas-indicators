@@ -8,7 +8,7 @@ using OFT.Rendering.Tools;
 
 namespace Atas_Indicators
 {
-    [DisplayName("Overnight Range")]
+    [DisplayName("[ツ] Overnight Range")]
     [Category("My Indicators")]
     public class OvernightRange : Indicator
     {
@@ -56,7 +56,7 @@ namespace Atas_Indicators
 
         [Display(Name = "Profile Width %", GroupName = "Volume Profile", Order = 102)]
         [Range(5, 150)]
-        public int ProfileWidthPct { get; set; } = 100;
+        public int ProfileWidthPct { get; set; } = 50;
 
         [Display(Name = "Show Delta", GroupName = "Volume Profile", Order = 103)]
         public bool ShowDelta { get; set; } = true;
