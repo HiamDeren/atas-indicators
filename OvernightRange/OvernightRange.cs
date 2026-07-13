@@ -143,7 +143,7 @@ namespace Atas_Indicators
                 int lxEnd = chart.GetXByBar(CurrentBar);
                 if (lxEnd < ctx.ClipBounds.Left) return;
 
-                _font ??= new RenderFont("Arial", 8);
+                _font ??= new RenderFont("Arial", 6);
 
                 if (ShowHighLow)
                 {
@@ -168,7 +168,7 @@ namespace Atas_Indicators
 
             if (x1 > ctx.ClipBounds.Right || Math.Max(xHigh2, xLow2) < ctx.ClipBounds.Left) return;
 
-            _font ??= new RenderFont("Arial", 8);
+            _font ??= new RenderFont("Arial", 6);
 
             PaintBoundary(ctx, chart, s, x1);
 

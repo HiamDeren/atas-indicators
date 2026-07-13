@@ -20,7 +20,7 @@ namespace Atas_Indicators
         private int _vpoBuiltEndBar = -1;
         private RenderFont? _font;
         private string _fontFamily = "Arial";
-        private int _fontSize = 7;
+        private int _fontSize = 6;
 
         // ═══════════════════════════════════════════════════════════════════════
         //  GROUP: General

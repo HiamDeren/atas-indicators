@@ -57,7 +57,7 @@ namespace Atas_Indicators.Modules
         public int    VaLineWidth      { get; set; } = 1;
 
         // Label font size
-        public int    FontSize         { get; set; } = 8;
+        public int    FontSize         { get; set; } = 6;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
