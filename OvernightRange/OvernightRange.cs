@@ -8,7 +8,7 @@ using OFT.Rendering.Tools;
 
 namespace Atas_Indicators
 {
-    [DisplayName("[ツ] Overnight Range")]
+    [DisplayName("[₢] Overnight Range")]
     [Category("My Indicators")]
     public class OvernightRange : Indicator
     {

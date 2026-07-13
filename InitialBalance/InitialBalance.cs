@@ -8,7 +8,7 @@ using OFT.Rendering.Tools;
 
 namespace Atas_Indicators
 {
-    [DisplayName("[ツ] Initial Balance")]
+    [DisplayName("[₢] Initial Balance")]
     [Category("My Indicators")]
     public class InitialBalance : Indicator
     {

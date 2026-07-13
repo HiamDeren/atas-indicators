@@ -8,7 +8,7 @@ using OFT.Rendering.Tools;
 
 namespace Atas_Indicators
 {
-    [DisplayName("[ツ] Range69")]
+    [DisplayName("[₢] Range69")]
     [Category("My Indicators")]
     public class Range69 : Indicator
     {
