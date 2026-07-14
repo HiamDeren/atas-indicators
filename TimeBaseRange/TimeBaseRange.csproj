@@ -1,14 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- ATAS classic runs .NET 10; ATAS X may still be on .NET 8 depending on
+         its own version. Multi-targeting per ATAS's own recommendation so the
+         same source produces a matching DLL for either host. -->
+    <TargetFrameworks>net8.0-windows;net10.0-windows</TargetFrameworks>
     <AssemblyName>TimeBaseRange</AssemblyName>
     <RootNamespace>Atas_Indicators</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
     <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
   </ItemGroup>
 
